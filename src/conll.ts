@@ -78,7 +78,10 @@ export const emptySentenceJson = (): sentenceJson_T => ({
 });
 
 type tabType_T = 'str' | 'int' | 'dict' | 'deps';
-type tabLabel_T = 'ID' | 'FORM' | 'LEMMA' | 'UPOS' | 'XPOS' | 'FEATS' | 'HEAD' | 'DEPREL' | 'DEPS' | 'MISC';
+
+// export + type instead of just type as above because I also need the labels as a list
+export const tabLabel_Ts = ['ID', 'FORM', 'LEMMA', 'UPOS', 'XPOS', 'FEATS', 'HEAD', 'DEPREL', 'DEPS', 'MISC'];
+type tabLabel_T = typeof tabLabel_Ts[number];
 
 interface tabMeta_T {
   label: tabLabel_T;
@@ -298,24 +301,27 @@ export const _encodeTabData = (tabData: string | number | featuresJson_T | depsJ
   }
 };
 
-export const _tokenJsonToConll = (tokenJson: tokenJson_T): string => {
+export const _tokenJsonToConll = (tokenJson: tokenJson_T, features: string[] = tabLabel_Ts): string => {
   const splittedTokenConll: string[] = [];
   for (const tabIndex in CONLL_STRUCTURE) {
     if (CONLL_STRUCTURE.hasOwnProperty(tabIndex)) {
       const tabMeta = CONLL_STRUCTURE[tabIndex];
       const tabLabel = tabMeta.label;
       const tabType = tabMeta.type;
-
-      const tabDataJson = tokenJson[tabLabel];
-      const tabDataConll = _encodeTabData(tabDataJson, tabType);
-      splittedTokenConll.push(tabDataConll);
+      if (features.includes(tabLabel)) {
+        const tabDataJson = tokenJson[tabLabel];
+        const tabDataConll = _encodeTabData(tabDataJson, tabType);
+        splittedTokenConll.push(tabDataConll);
+      } else {
+        splittedTokenConll.push("_");
+      }
     }
   }
   const tokenConll = splittedTokenConll.join('\t');
   return tokenConll;
 };
 
-export const _treeJsonToConll = (treeJson: treeJson_T): string => {
+export const _treeJsonToConll = (treeJson: treeJson_T, features: string[] = tabLabel_Ts): string => {
   const treeConllLines: string[] = [];
   const tokensJson = { ...treeJson.nodesJson, ...treeJson.groupsJson, ...treeJson.enhancedNodesJson };
   const tokenIndexes = Object.values(tokensJson).map((tokenJson) => {
@@ -324,7 +330,7 @@ export const _treeJsonToConll = (treeJson: treeJson_T): string => {
   const sortedTokenIndexes = _sortTokenIndexes(tokenIndexes);
   for (const tokenIndex of sortedTokenIndexes) {
     const tokenJson = tokensJson[tokenIndex];
-    const tokenConll = _tokenJsonToConll(tokenJson);
+    const tokenConll = _tokenJsonToConll(tokenJson, features);
     treeConllLines.push(tokenConll);
   }
 
@@ -350,9 +356,9 @@ export const _metaJsonToConll = (metaJson: metaJson_T): string => {
   return metaConll;
 };
 
-export const sentenceJsonToConll = (sentenceJson: sentenceJson_T): string => {
+export const sentenceJsonToConll = (sentenceJson: sentenceJson_T, features: string[] = tabLabel_Ts): string => {
   const metaConll = _metaJsonToConll(sentenceJson.metaJson);
-  const treeConll = _treeJsonToConll(sentenceJson.treeJson);
+  const treeConll = _treeJsonToConll(sentenceJson.treeJson, features);
   if (metaConll === '') {
     return treeConll;
   }

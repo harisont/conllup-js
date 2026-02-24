@@ -1,6 +1,6 @@
 declare const _default: {
     sentenceConllToJson: (sentenceConll: string) => import("./conll").sentenceJson_T;
-    sentenceJsonToConll: (sentenceJson: import("./conll").sentenceJson_T) => string;
+    sentenceJsonToConll: (sentenceJson: import("./conll").sentenceJson_T, features?: string[]) => string;
     emptySentenceJson: () => import("./conll").sentenceJson_T;
     emptyMetaJson: () => import("./conll").metaJson_T;
     emptyTreeJson: () => import("./conll").treeJson_T;
